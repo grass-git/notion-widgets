@@ -35,9 +35,16 @@
 <body>
   <a class="poster" id="poster" href="new-lecture.html" target="_blank" rel="noopener"
      title="Capture in Obsidian — new lecture note in 01 Inbox">
-    <img src="capture-in-obsidian.png" alt="Capture in Obsidian"
+    <img src="capture-in-obsidian.jpg" alt="Capture in Obsidian"
          onerror="document.getElementById('poster').classList.add('noimg')">
     <div class="fallback"><div>📝<br>Capture in Obsidian</div></div>
   </a>
+<script>
+  // GitHub Pages serves max-age=600; a unique query per click guarantees the
+  // browser fetches the current shim instead of replaying a cached one.
+  document.getElementById("poster").addEventListener("click", function () {
+    this.href = "new-lecture.html?t=" + Date.now();
+  });
+</script>
 </body>
 </html>
