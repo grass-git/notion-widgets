@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New Lecture Note</title>
+<!--
+  Redirect shim: Notion's API drops non-http(s) link hrefs, so the Library
+  card links here and this page hands off to the obsidian:// URI.
+  Target: vault "Engineering", new note at 01 Inbox/Lecture.md (Obsidian
+  auto-increments the name if it already exists). Frontmatter matches the
+  vault's lecture-note contract; course/date are filled at filing time.
+-->
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    font: 15px/1.5 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #fff; color: #37352f;
+  }
+  @media (prefers-color-scheme: dark) { body { background: #191919; color: #d4d4d4; } }
+  .card { text-align: center; padding: 32px; max-width: 360px; }
+  .icon { font-size: 40px; margin-bottom: 12px; }
+  a.btn {
+    display: inline-block; margin-top: 16px; padding: 10px 18px; border-radius: 6px;
+    background: #2383e2; color: #fff; text-decoration: none; font-weight: 600;
+  }
+  .hint { margin-top: 20px; font-size: 13px; opacity: .6; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📝</div>
+    <div>Opening a new lecture note in Obsidian…</div>
+    <a class="btn" id="go" href="#">Open Obsidian</a>
+    <div class="hint">If nothing happened, click the button. You can close this tab afterwards.</div>
+  </div>
+<script>
+  var content = "---\ntype: lecture\ncourse:\ndate:\ndistilled: false\n---\n\n## Notes\n";
+  var uri = "obsidian://new?vault=Engineering"
+          + "&file=" + encodeURIComponent("01 Inbox/Lecture")
+          + "&content=" + encodeURIComponent(content);
+  document.getElementById("go").href = uri;
+  location.href = uri;
+</script>
+</body>
+</html>
