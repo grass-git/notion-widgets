@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manchester, NH weather</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --card: #f7f7f5;
+    --border: rgba(55, 53, 47, 0.09);
+    --text: rgb(55, 53, 47);
+    --text-2: rgba(55, 53, 47, 0.65);
+    --text-3: rgba(55, 53, 47, 0.45);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #191919;
+      --card: #232323;
+      --border: rgba(255, 255, 255, 0.065);
+      --text: rgba(255, 255, 255, 0.81);
+      --text-2: rgba(255, 255, 255, 0.46);
+      --text-3: rgba(255, 255, 255, 0.28);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+  }
+  .card {
+    width: 100%;
+    max-width: 860px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-height: 92px;
+  }
+  .now { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .now .icon { font-size: 34px; line-height: 1; }
+  .now .temp { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; white-space: nowrap; }
+  .now .sub { font-size: 12px; color: var(--text-2); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .days { display: flex; gap: 16px; flex-shrink: 0; }
+  .day { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .day .name { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+  .day .icon { font-size: 17px; line-height: 1.3; }
+  .day .hi { font-size: 12px; font-weight: 500; }
+  .day .lo { font-size: 11px; color: var(--text-3); }
+  .state { font-size: 13px; color: var(--text-2); }
+  @media (max-width: 640px) { .day:nth-child(n+5) { display: none; } }
+  @media (max-width: 520px) { .day:nth-child(n+4) { display: none; } }
+  @media (max-width: 430px) { .days { display: none; } }
+</style>
+</head>
+<body>
+  <div class="card" id="card"><span class="state">Loading weather…</span></div>
+<script>
+(function () {
+  var LAT = 42.9956, LON = -71.4548;
+  var API = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
+    "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m" +
+    "&daily=weather_code,temperature_2m_max,temperature_2m_min" +
+    "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York&forecast_days=6";
+
+  function wmo(code) {
+    if (code === 0) return ["☀️", "Clear"];
+    if (code === 1) return ["🌤️", "Mostly clear"];
+    if (code === 2) return ["⛅", "Partly cloudy"];
+    if (code === 3) return ["☁️", "Overcast"];
+    if (code === 45 || code === 48) return ["🌫️", "Fog"];
+    if (code >= 51 && code <= 57) return ["🌦️", "Drizzle"];
+    if ((code >= 61 && code <= 67)) return ["🌧️", "Rain"];
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return ["🌨️", "Snow"];
+    if (code >= 80 && code <= 82) return ["🌦️", "Showers"];
+    if (code >= 95) return ["⛈️", "Thunderstorm"];
+    return ["🌡️", "Weather"];
+  }
+
+  function dayName(iso) {
+    var d = new Date(iso + "T12:00:00");
+    return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  }); }
+
+  function render(data) {
+    var c = data.current, d = data.daily;
+    var now = wmo(c.weather_code);
+    var html =
+      '<div class="now">' +
+        '<span class="icon">' + now[0] + '</span>' +
+        '<div>' +
+          '<div class="temp">' + Math.round(c.temperature_2m) + '° · ' + esc(now[1]) + '</div>' +
+          '<div class="sub">Manchester, NH · feels ' + Math.round(c.apparent_temperature) +
+            '° · wind ' + Math.round(c.wind_speed_10m) + ' mph</div>' +
+        '</div>' +
+      '</div><div class="days">';
+    for (var i = 1; i < d.time.length; i++) {
+      var w = wmo(d.weather_code[i]);
+      html +=
+        '<div class="day">' +
+          '<span class="name">' + dayName(d.time[i]) + '</span>' +
+          '<span class="icon">' + w[0] + '</span>' +
+          '<span class="hi">' + Math.round(d.temperature_2m_max[i]) + '°</span>' +
+          '<span class="lo">' + Math.round(d.temperature_2m_min[i]) + '°</span>' +
+        '</div>';
+    }
+    html += '</div>';
+    document.getElementById("card").innerHTML = html;
+  }
+
+  function fail() {
+    document.getElementById("card").innerHTML =
+      '<span class="state">Weather unavailable · Manchester, NH</span>';
+  }
+
+  function load() {
+    fetch(API).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }).then(render).catch(fail);
+  }
+
+  load();
+  setInterval(load, 30 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) load();
+  });
+})();
+</script>
+</body>
+</html>
