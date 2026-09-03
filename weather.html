@@ -146,21 +146,37 @@
     if (cached) { render(cached); hasData = true; return; }
     var detail = err && err.message ? err.message : "unknown error";
     document.getElementById("card").innerHTML =
-      '<span class="state">Weather unavailable · Manchester, NH · v4: ' + esc(detail) + '</span>';
+      '<span class="state">Weather unavailable · Manchester, NH · v5: ' + esc(detail) + '</span>';
     setTimeout(load, retryMs); // retry with backoff until first success
     retryMs = Math.min(retryMs * 2, 5 * 60 * 1000);
   }
 
+  function probe(err) {
+    // append a same-origin fetch result so we can tell "all fetches blocked"
+    // apart from "only cross-origin mangled"
+    fetch("weather.html", { cache: "no-store" }).then(function (r) {
+      fail(new Error(err.message + " || same-origin: HTTP " + r.status));
+    }).catch(function (e2) {
+      fail(new Error(err.message + " || same-origin THREW: " + e2.message));
+    });
+  }
+
   function load() {
     fetch(API).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
+      return r.text().then(function (t) {
+        if (!r.ok) throw new Error("HTTP " + r.status + " · body: " + t.slice(0, 60));
+        try { return JSON.parse(t); }
+        catch (e) {
+          throw new Error("HTTP " + r.status + " · ct: " + (r.headers.get("content-type") || "?") +
+            " · body: " + t.slice(0, 80));
+        }
+      });
     }).then(function (data) {
       render(data);
       hasData = true;
       retryMs = 30 * 1000;
       cacheSet(data);
-    }).catch(fail);
+    }).catch(probe);
   }
 
   load();
