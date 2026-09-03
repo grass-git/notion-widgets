@@ -140,19 +140,20 @@
     } catch (e) {}
   }
 
-  function fail() {
+  function fail(err) {
     if (hasData) return; // keep showing the last good forecast
     var cached = cacheGet();
     if (cached) { render(cached); hasData = true; return; }
+    var detail = err && err.message ? err.message : "unknown error";
     document.getElementById("card").innerHTML =
-      '<span class="state">Weather unavailable · Manchester, NH</span>';
+      '<span class="state">Weather unavailable · Manchester, NH · v4: ' + esc(detail) + '</span>';
     setTimeout(load, retryMs); // retry with backoff until first success
     retryMs = Math.min(retryMs * 2, 5 * 60 * 1000);
   }
 
   function load() {
     fetch(API).then(function (r) {
-      if (!r.ok) throw new Error(r.status);
+      if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     }).then(function (data) {
       render(data);
