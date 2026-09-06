@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open link</title>
+<!--
+  GENERIC poster-link widget. Same trick as capture.html: the whole card is one
+  <a> living inside a cross-origin iframe, so Notion's own link handler never
+  sees the click.
+
+  WHY THIS EXISTS (2026-09-05): Notion broke left-click on links. Its handler
+  intercepts the click, calls preventDefault() to stop the browser navigating,
+  then fails to open the URL — so native image-links AND caption links both do
+  nothing. Verified in Chrome web, so it is not a desktop-app or machine issue.
+  Clicks inside an iframe never reach that handler, which is why the Obsidian
+  capture widget kept working the whole time. Remove these embeds and go back
+  to native image links once Notion ships a fix.
+
+  USAGE — everything is a query param, so this one file serves every link:
+    go.html?u=<destination>&img=<image>&label=<text>
+      u     required, http(s) only. Destination to open in a new tab.
+      img   required. Filename in this repo, or an https URL.
+      label optional. Tooltip + text shown if the image fails to load.
+
+  Source of truth: claude-wiki/plans/obsidian-notion/go.html
+-->
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; height: 100%; background: transparent; }
+  a.poster {
+    display: block; position: relative; width: 100%; height: 100%;
+    min-height: 120px; overflow: hidden; border-radius: 6px;
+    text-decoration: none; cursor: pointer;
+    background: #f7f6f3; color: #37352f;
+  }
+  @media (prefers-color-scheme: dark) { a.poster { background: #202020; color: #d4d4d4; } }
+  a.poster img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  .fallback {
+    position: absolute; inset: 0; display: none; place-items: center; text-align: center;
+    font: 600 18px/1.3 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  a.poster.noimg img { display: none; }
+  a.poster.noimg .fallback { display: grid; }
+</style>
+</head>
+<body>
+  <a class="poster" id="poster" rel="noopener noreferrer" target="_blank">
+    <img id="shot" alt="">
+    <div class="fallback"><div id="fbtext">🔗<br>Open link</div></div>
+  </a>
+<script>
+(function () {
+  var q      = new URLSearchParams(location.search);
+  var poster = document.getElementById("poster");
+  var shot   = document.getElementById("shot");
+  var label  = q.get("label") || "Open link";
+
+  // Only ever emit an http(s) href. Without this check a crafted embed URL
+  // could smuggle in javascript: and run script in this frame.
+  function safeUrl(raw) {
+    if (!raw) return null;
+    try {
+      var u = new URL(raw, location.href);
+      return (u.protocol === "http:" || u.protocol === "https:") ? u.href : null;
+    } catch (e) { return null; }
+  }
+
+  var dest = safeUrl(q.get("u"));
+  var img  = safeUrl(q.get("img"));
+
+  poster.title = label;
+  document.title = label;
+  document.getElementById("fbtext").innerHTML = "🔗<br>" + label.replace(/[<>&]/g, "");
+
+  if (dest) {
+    poster.href = dest;
+  } else {
+    poster.removeAttribute("href");
+    poster.style.cursor = "default";
+  }
+
+  if (img) {
+    shot.alt = label;
+    shot.onerror = function () { poster.classList.add("noimg"); };
+    shot.src = img;
+  } else {
+    poster.classList.add("noimg");
+  }
+})();
+</script>
+</body>
+</html>
