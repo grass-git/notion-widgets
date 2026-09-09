@@ -10,9 +10,9 @@
 
   Creates 01 Inbox/Lecture <today>.md in vault "Engineering" (Obsidian
   auto-increments the name on collision). Body = the vault's
-  99 Backend/Templates/Lecture Note.md with {{date}} and {{Title}} filled
-  at click time. KEEP IN SYNC: if that template changes, update TEMPLATE
-  below and push.
+  99 Backend/Templates/Lecture Note.md with {{date}} filled at click time,
+  so date: is always the day the note was created. KEEP IN SYNC: if that
+  template changes, update TEMPLATE below and push.
 -->
 <style>
   :root { color-scheme: light dark; }
@@ -39,7 +39,9 @@
     <div class="hint">If nothing happened, click the button. You can close this tab afterwards.</div>
   </div>
 <script>
-  // Verbatim mirror of 99 Backend/Templates/Lecture Note.md (kept in sync by hand).
+  // Verbatim mirror of 99 Backend/Templates/Lecture Note.md. No title heading
+  // by design: the note opens on blank space under the frontmatter so you can
+  // start typing notes immediately.
   var TEMPLATE = [
     "---",
     "type: lecture",
@@ -47,8 +49,6 @@
     "date: {{date}}",
     "distilled: false",
     "---",
-    "# {{Title}}",
-    "",
     "",
     "",
     "## Key ideas to distill",
@@ -62,14 +62,14 @@
     ""
   ].join("\n");
 
+  // Date the note is created = the moment this page is opened.
   var d = new Date();
   var pad = function (n) { return (n < 10 ? "0" : "") + n; };
   var today = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-  var title = "Lecture " + today;
 
-  var content = TEMPLATE.replace(/\{\{date\}\}/g, today).replace(/\{\{title\}\}/gi, title);
+  var content = TEMPLATE.replace(/\{\{date\}\}/g, today);
   var uri = "obsidian://new?vault=Engineering"
-          + "&file=" + encodeURIComponent("01 Inbox/" + title)
+          + "&file=" + encodeURIComponent("01 Inbox/Lecture " + today)
           + "&content=" + encodeURIComponent(content);
 
   document.getElementById("go").href = uri;
